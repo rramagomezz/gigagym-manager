@@ -8,26 +8,29 @@ import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import { formatCurrency, calcClassBonus } from '../utils/salary'
+import { useAuth } from '../hooks/useAuth'
 
 const now = new Date()
-const emptyForm = {
-  employee_id: '',
-  class_type_id: '',
-  date: now.toISOString().split('T')[0],
-  hours: '1',
-  students_count: '',
-  observations: ''
-}
 
 export default function ClassLogs() {
+  const { isAdmin, employee: currentEmployee } = useAuth()
   const [logs, setLogs] = useState([])
   const [employees, setEmployees] = useState([])
   const [classTypes, setClassTypes] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState({
+    employee_id: currentEmployee?.id || '',
+    class_type_id: '',
+    date: now.toISOString().split('T')[0],
+    hours: '1',
+    students_count: '',
+    observations: ''
+  })
   const [saving, setSaving] = useState(false)
-  const [filterEmployee, setFilterEmployee] = useState('')
+  const [filterEmployee, setFilterEmployee] = useState(
+    isAdmin ? '' : currentEmployee?.id || ''
+  )
   const [filterMonth, setFilterMonth] = useState(now.getMonth() + 1)
   const [filterYear, setFilterYear] = useState(now.getFullYear())
 
@@ -44,9 +47,6 @@ export default function ClassLogs() {
       setEmployees(emps)
       setLogs(logsData)
       setClassTypes(types)
-      if (emps.length > 0 && !form.employee_id) {
-        setForm(f => ({ ...f, employee_id: emps[0].id }))
-      }
       if (types.length > 0 && !form.class_type_id) {
         setForm(f => ({ ...f, class_type_id: types[0].id }))
       }
@@ -58,13 +58,13 @@ export default function ClassLogs() {
   }
 
   async function handleSave() {
-    if (!form.employee_id || !form.class_type_id || !form.date || !form.students_count) {
+    if (!form.class_type_id || !form.date || !form.students_count) {
       return alert('Completá todos los campos obligatorios')
     }
     setSaving(true)
     try {
       await createClassLog({
-        employee_id: form.employee_id,
+        employee_id: isAdmin ? form.employee_id : currentEmployee.id,
         class_type_id: form.class_type_id,
         date: form.date,
         hours: Number(form.hours),
@@ -73,7 +73,7 @@ export default function ClassLogs() {
       })
       await fetchAll()
       setShowModal(false)
-      setForm({ ...emptyForm, employee_id: form.employee_id, class_type_id: form.class_type_id })
+      setForm(f => ({ ...f, students_count: '', observations: '' }))
     } catch (e) {
       alert('Error al guardar: ' + e.message)
     } finally {
@@ -102,7 +102,6 @@ export default function ClassLogs() {
   }
 
   const totalBonus = logs.reduce((acc, l) => acc + getBonusForLog(l), 0)
-  const totalClasses = logs.length
 
   const months = [
     { value: 1, label: 'Enero' }, { value: 2, label: 'Febrero' },
@@ -116,42 +115,40 @@ export default function ClassLogs() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Clases dictadas</h1>
+        <h1 className="text-2xl font-bold text-gray-800">
+          {isAdmin ? 'Clases dictadas' : 'Mis clases'}
+        </h1>
         <Button onClick={() => setShowModal(true)}>+ Cargar clase</Button>
       </div>
 
-      {/* Filtros */}
       <Card className="mb-6">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Select
-            label="Empleado"
-            value={filterEmployee}
-            onChange={e => setFilterEmployee(e.target.value)}
-            options={[
-              { value: '', label: 'Todos' },
-              ...employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))
-            ]}
-          />
+          {isAdmin && (
+            <Select
+              label="Empleado"
+              value={filterEmployee}
+              onChange={e => setFilterEmployee(e.target.value)}
+              options={[
+                { value: '', label: 'Todos' },
+                ...employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))
+              ]}
+            />
+          )}
           <Select
             label="Mes"
             value={filterMonth}
             onChange={e => setFilterMonth(Number(e.target.value))}
             options={months.map(m => ({ value: m.value, label: m.label }))}
           />
-          <Input
-            label="Año"
-            type="number"
-            value={filterYear}
-            onChange={e => setFilterYear(Number(e.target.value))}
-          />
+          <Input label="Año" type="number" value={filterYear}
+            onChange={e => setFilterYear(Number(e.target.value))} />
         </div>
       </Card>
 
-      {/* Resumen */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <Card>
           <p className="text-sm text-gray-500 mb-1">Total clases</p>
-          <p className="text-2xl font-bold text-blue-600">{totalClasses}</p>
+          <p className="text-2xl font-bold text-blue-600">{logs.length}</p>
         </Card>
         <Card>
           <p className="text-sm text-gray-500 mb-1">Total bonos</p>
@@ -159,12 +156,11 @@ export default function ClassLogs() {
         </Card>
       </div>
 
-      {/* Lista */}
       {loading ? (
         <p className="text-center text-gray-400 py-8">Cargando...</p>
       ) : logs.length === 0 ? (
         <Card>
-          <p className="text-center text-gray-400 py-8">No hay clases registradas para este período.</p>
+          <p className="text-center text-gray-400 py-8">No hay clases para este período.</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -176,27 +172,25 @@ export default function ClassLogs() {
               <Card key={log.id} className="py-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-semibold text-gray-800">
-                      {emp ? `${emp.first_name} ${emp.last_name}` : 'Empleado eliminado'}
-                    </p>
-                    <p className="text-sm text-blue-600 font-medium">
-                      {log.class_types?.name || 'Clase'}
-                    </p>
+                    {isAdmin && (
+                      <p className="font-semibold text-gray-800">
+                        {emp ? `${emp.first_name} ${emp.last_name}` : 'Empleado eliminado'}
+                      </p>
+                    )}
+                    <p className="text-sm text-blue-600 font-medium">{log.class_types?.name || 'Clase'}</p>
                     <p className="text-sm text-gray-500 mt-1">
                       {new Date(log.date + 'T12:00:00').toLocaleDateString('es-AR')} · {log.hours}hs · {log.students_count} alumnos
                       {hasExtra && (
-                        <span className="ml-2 bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded-full">
-                          +bono extra
-                        </span>
+                        <span className="ml-2 bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded-full">+bono extra</span>
                       )}
                     </p>
-                    {log.observations && (
-                      <p className="text-xs text-gray-400 mt-1">📝 {log.observations}</p>
-                    )}
+                    {log.observations && <p className="text-xs text-gray-400 mt-1">📝 {log.observations}</p>}
                   </div>
                   <div className="flex items-center gap-4">
                     <p className="font-bold text-green-600">{formatCurrency(bonus)}</p>
-                    <Button size="sm" variant="danger" onClick={() => handleDelete(log.id)}>🗑️</Button>
+                    {(isAdmin || log.employee_id === currentEmployee?.id) && (
+                      <Button size="sm" variant="danger" onClick={() => handleDelete(log.id)}>🗑️</Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -205,47 +199,39 @@ export default function ClassLogs() {
         </div>
       )}
 
-      {/* Modal */}
       {showModal && (
         <Modal title="Cargar clase" onClose={() => setShowModal(false)}>
           <div className="space-y-4">
-            <Select
-              label="Empleado *"
-              value={form.employee_id}
-              onChange={e => setForm({ ...form, employee_id: e.target.value })}
-              options={employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))}
-            />
+            {isAdmin && (
+              <Select
+                label="Empleado *"
+                value={form.employee_id}
+                onChange={e => setForm({ ...form, employee_id: e.target.value })}
+                options={employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))}
+              />
+            )}
+            {!isAdmin && (
+              <div className="bg-blue-50 rounded-xl px-4 py-3">
+                <p className="text-sm text-blue-700 font-medium">
+                  👤 {currentEmployee?.first_name} {currentEmployee?.last_name}
+                </p>
+              </div>
+            )}
             <Select
               label="Tipo de clase *"
               value={form.class_type_id}
               onChange={e => setForm({ ...form, class_type_id: e.target.value })}
               options={classTypes.map(ct => ({ value: ct.id, label: ct.name }))}
             />
-            <Input
-              label="Fecha *"
-              type="date"
-              value={form.date}
-              onChange={e => setForm({ ...form, date: e.target.value })}
-            />
+            <Input label="Fecha *" type="date" value={form.date}
+              onChange={e => setForm({ ...form, date: e.target.value })} />
             <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Horas de clase *"
-                type="number"
-                step="0.5"
-                value={form.hours}
-                onChange={e => setForm({ ...form, hours: e.target.value })}
-                placeholder="1"
-              />
-              <Input
-                label="Cantidad de alumnos *"
-                type="number"
-                value={form.students_count}
-                onChange={e => setForm({ ...form, students_count: e.target.value })}
-                placeholder="15"
-              />
+              <Input label="Horas de clase *" type="number" step="0.5" value={form.hours}
+                onChange={e => setForm({ ...form, hours: e.target.value })} placeholder="1" />
+              <Input label="Cantidad de alumnos *" type="number" value={form.students_count}
+                onChange={e => setForm({ ...form, students_count: e.target.value })} placeholder="15" />
             </div>
 
-            {/* Preview del bono */}
             {form.hours && form.students_count && classTypes.length > 0 && (
               <div className="bg-blue-50 rounded-xl p-3">
                 <p className="text-sm text-blue-700 font-medium">
@@ -266,8 +252,7 @@ export default function ClassLogs() {
               <label className="text-sm font-medium text-gray-700">Observaciones</label>
               <textarea
                 className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows={3}
-                value={form.observations}
+                rows={3} value={form.observations}
                 onChange={e => setForm({ ...form, observations: e.target.value })}
                 placeholder="Opcional..."
               />
@@ -284,3 +269,8 @@ export default function ClassLogs() {
     </div>
   )
 }
+<Route path="/settings" element={
+  <ProtectedRoute adminOnly>
+    <Settings />
+  </ProtectedRoute>
+} />

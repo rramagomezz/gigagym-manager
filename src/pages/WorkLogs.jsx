@@ -7,31 +7,37 @@ import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import { formatCurrency } from '../utils/salary'
+import { useAuth } from '../hooks/useAuth'
 
 const now = new Date()
-const emptyForm = {
-  employee_id: '',
-  date: now.toISOString().split('T')[0],
-  hours: '',
-  is_holiday: 'false',
-  notes: ''
-}
 
 export default function WorkLogs() {
+  const { isAdmin, employee: currentEmployee } = useAuth()
   const [logs, setLogs] = useState([])
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState({
+    employee_id: currentEmployee?.id || '',
+    date: now.toISOString().split('T')[0],
+    hours: '',
+    is_holiday: 'false',
+    notes: ''
+  })
   const [saving, setSaving] = useState(false)
-  const [filterEmployee, setFilterEmployee] = useState('')
+  const [filterEmployee, setFilterEmployee] = useState(
+    isAdmin ? '' : currentEmployee?.id || ''
+  )
   const [filterMonth, setFilterMonth] = useState(now.getMonth() + 1)
   const [filterYear, setFilterYear] = useState(now.getFullYear())
 
-  useEffect(() => {
-    fetchAll()
-  }, [filterEmployee, filterMonth, filterYear])
-
+  useEffect(() => { fetchAll() }, [filterEmployee, filterMonth, filterYear])
+useEffect(() => {
+    if (currentEmployee?.id) {
+      setForm(f => ({ ...f, employee_id: currentEmployee.id }))
+    }
+  }, [currentEmployee])
+  
   async function fetchAll() {
     setLoading(true)
     try {
@@ -41,9 +47,6 @@ export default function WorkLogs() {
       ])
       setEmployees(emps)
       setLogs(logsData)
-      if (emps.length > 0 && !form.employee_id) {
-        setForm(f => ({ ...f, employee_id: emps[0].id }))
-      }
     } catch (e) {
       alert('Error al cargar datos: ' + e.message)
     } finally {
@@ -56,7 +59,7 @@ export default function WorkLogs() {
     setSaving(true)
     try {
       await createWorkLog({
-        employee_id: form.employee_id,
+        employee_id: isAdmin ? form.employee_id : currentEmployee.id,
         date: form.date,
         hours: Number(form.hours),
         is_holiday: form.is_holiday === 'true',
@@ -64,7 +67,7 @@ export default function WorkLogs() {
       })
       await fetchAll()
       setShowModal(false)
-      setForm({ ...emptyForm, employee_id: form.employee_id })
+      setForm(f => ({ ...f, hours: '', notes: '' }))
     } catch (e) {
       alert('Error al guardar: ' + e.message)
     } finally {
@@ -107,22 +110,26 @@ export default function WorkLogs() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Horas trabajadas</h1>
+        <h1 className="text-2xl font-bold text-gray-800">
+          {isAdmin ? 'Horas trabajadas' : 'Mis horas'}
+        </h1>
         <Button onClick={() => setShowModal(true)}>+ Cargar horas</Button>
       </div>
 
       {/* Filtros */}
       <Card className="mb-6">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Select
-            label="Empleado"
-            value={filterEmployee}
-            onChange={e => setFilterEmployee(e.target.value)}
-            options={[
-              { value: '', label: 'Todos' },
-              ...employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))
-            ]}
-          />
+          {isAdmin && (
+            <Select
+              label="Empleado"
+              value={filterEmployee}
+              onChange={e => setFilterEmployee(e.target.value)}
+              options={[
+                { value: '', label: 'Todos' },
+                ...employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))
+              ]}
+            />
+          )}
           <Select
             label="Mes"
             value={filterMonth}
@@ -164,9 +171,11 @@ export default function WorkLogs() {
             return (
               <Card key={log.id} className="flex justify-between items-center py-4">
                 <div>
-                  <p className="font-semibold text-gray-800">
-                    {emp ? `${emp.first_name} ${emp.last_name}` : 'Empleado eliminado'}
-                  </p>
+                  {isAdmin && (
+                    <p className="font-semibold text-gray-800">
+                      {emp ? `${emp.first_name} ${emp.last_name}` : 'Empleado eliminado'}
+                    </p>
+                  )}
                   <p className="text-sm text-gray-500">
                     {new Date(log.date + 'T12:00:00').toLocaleDateString('es-AR')} · {log.hours}hs
                     {log.is_holiday && <span className="ml-2 bg-orange-100 text-orange-600 text-xs px-2 py-0.5 rounded-full">Feriado</span>}
@@ -175,7 +184,9 @@ export default function WorkLogs() {
                 </div>
                 <div className="flex items-center gap-4">
                   <p className="font-bold text-green-600">{formatCurrency(calcPay(log))}</p>
-                  <Button size="sm" variant="danger" onClick={() => handleDelete(log.id)}>🗑️</Button>
+                  {(isAdmin || log.employee_id === currentEmployee?.id) && (
+                    <Button size="sm" variant="danger" onClick={() => handleDelete(log.id)}>🗑️</Button>
+                  )}
                 </div>
               </Card>
             )
@@ -187,29 +198,26 @@ export default function WorkLogs() {
       {showModal && (
         <Modal title="Cargar horas" onClose={() => setShowModal(false)}>
           <div className="space-y-4">
-            <Select
-              label="Empleado *"
-              value={form.employee_id}
-              onChange={e => setForm({ ...form, employee_id: e.target.value })}
-              options={employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))}
-            />
-            <Input
-              label="Fecha *"
-              type="date"
-              value={form.date}
-              onChange={e => setForm({ ...form, date: e.target.value })}
-            />
-            <Input
-              label="Horas trabajadas *"
-              type="number"
-              step="0.5"
-              value={form.hours}
-              onChange={e => setForm({ ...form, hours: e.target.value })}
-              placeholder="8"
-            />
-            <Select
-              label="Tipo de día *"
-              value={form.is_holiday}
+            {isAdmin && (
+              <Select
+                label="Empleado *"
+                value={form.employee_id}
+                onChange={e => setForm({ ...form, employee_id: e.target.value })}
+                options={employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))}
+              />
+            )}
+            {!isAdmin && (
+              <div className="bg-blue-50 rounded-xl px-4 py-3">
+                <p className="text-sm text-blue-700 font-medium">
+                  👤 {currentEmployee?.first_name} {currentEmployee?.last_name}
+                </p>
+              </div>
+            )}
+            <Input label="Fecha *" type="date" value={form.date}
+              onChange={e => setForm({ ...form, date: e.target.value })} />
+            <Input label="Horas trabajadas *" type="number" step="0.5" value={form.hours}
+              onChange={e => setForm({ ...form, hours: e.target.value })} placeholder="8" />
+            <Select label="Tipo de día *" value={form.is_holiday}
               onChange={e => setForm({ ...form, is_holiday: e.target.value })}
               options={[
                 { value: 'false', label: 'Día normal' },
@@ -220,8 +228,7 @@ export default function WorkLogs() {
               <label className="text-sm font-medium text-gray-700">Observaciones</label>
               <textarea
                 className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows={3}
-                value={form.notes}
+                rows={3} value={form.notes}
                 onChange={e => setForm({ ...form, notes: e.target.value })}
                 placeholder="Opcional..."
               />
