@@ -34,14 +34,20 @@ export default function ClassLogs() {
   const [filterMonth, setFilterMonth] = useState(now.getMonth() + 1)
   const [filterYear, setFilterYear] = useState(now.getFullYear())
 
-  useEffect(() => { fetchAll() }, [filterEmployee, filterMonth, filterYear])
+ useEffect(() => {
+  if (isAdmin || currentEmployee?.id) {
+    fetchAll()
+  }
+}, [filterEmployee, filterMonth, filterYear, currentEmployee])
+
 
   async function fetchAll() {
     setLoading(true)
     try {
+      const employeeFilter = isAdmin ? (filterEmployee || null) : currentEmployee?.id
       const [emps, logsData, types] = await Promise.all([
         getEmployees(),
-        getClassLogs(filterEmployee || null, filterMonth, filterYear),
+        getClassLogs(employeeFilter, filterMonth, filterYear),
         getClassTypes()
       ])
       setEmployees(emps)
@@ -145,16 +151,18 @@ export default function ClassLogs() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <Card>
-          <p className="text-sm text-gray-500 mb-1">Total clases</p>
-          <p className="text-2xl font-bold text-blue-600">{logs.length}</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-gray-500 mb-1">Total bonos</p>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(totalBonus)}</p>
-        </Card>
-      </div>
+{isAdmin && (
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <Card>
+            <p className="text-sm text-gray-500 mb-1">Total clases</p>
+            <p className="text-2xl font-bold text-blue-600">{logs.length}</p>
+          </Card>
+          <Card>
+            <p className="text-sm text-gray-500 mb-1">Total bonos</p>
+            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalBonus)}</p>
+          </Card>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-center text-gray-400 py-8">Cargando...</p>

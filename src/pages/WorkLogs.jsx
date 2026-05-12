@@ -31,19 +31,19 @@ export default function WorkLogs() {
   const [filterMonth, setFilterMonth] = useState(now.getMonth() + 1)
   const [filterYear, setFilterYear] = useState(now.getFullYear())
 
-  useEffect(() => { fetchAll() }, [filterEmployee, filterMonth, filterYear])
 useEffect(() => {
-    if (currentEmployee?.id) {
-      setForm(f => ({ ...f, employee_id: currentEmployee.id }))
-    }
-  }, [currentEmployee])
+  if (isAdmin || currentEmployee?.id) {
+    fetchAll()
+  }
+}, [filterEmployee, filterMonth, filterYear, currentEmployee])
   
-  async function fetchAll() {
+async function fetchAll() {
     setLoading(true)
     try {
+      const employeeFilter = isAdmin ? (filterEmployee || null) : currentEmployee?.id
       const [emps, logsData] = await Promise.all([
         getEmployees(),
-        getWorkLogs(filterEmployee || null, filterMonth, filterYear)
+        getWorkLogs(employeeFilter, filterMonth, filterYear)
       ])
       setEmployees(emps)
       setLogs(logsData)
@@ -145,17 +145,19 @@ useEffect(() => {
         </div>
       </Card>
 
-      {/* Resumen */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <Card>
-          <p className="text-sm text-gray-500 mb-1">Total horas</p>
-          <p className="text-2xl font-bold text-blue-600">{totalHours}hs</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-gray-500 mb-1">Total a pagar</p>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(totalPay)}</p>
-        </Card>
-      </div>
+{/* Resumen */}
+      {isAdmin && (
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <Card>
+            <p className="text-sm text-gray-500 mb-1">Total horas</p>
+            <p className="text-2xl font-bold text-blue-600">{totalHours}hs</p>
+          </Card>
+          <Card>
+            <p className="text-sm text-gray-500 mb-1">Total a pagar</p>
+            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalPay)}</p>
+          </Card>
+        </div>
+      )}
 
       {/* Lista */}
       {loading ? (
