@@ -269,8 +269,3 @@ export default function ClassLogs() {
     </div>
   )
 }
-<Route path="/settings" element={
-  <ProtectedRoute adminOnly>
-    <Settings />
-  </ProtectedRoute>
-} />
