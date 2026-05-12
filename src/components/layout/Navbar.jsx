@@ -8,6 +8,7 @@ export default function Navbar({ isAdmin, onSignOut, employee }) {
     { to: '/employees', label: '👥 Empleados' },
     { to: '/work-logs', label: '🕐 Horas' },
     { to: '/class-logs', label: '🏋️ Clases' },
+    { to: '/settings', label: '⚙️ Configuración' },
   ]
 
   const employeeLinks = [

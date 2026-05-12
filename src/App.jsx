@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard'
 import Employees from './pages/Employees'
 import WorkLogs from './pages/WorkLogs'
 import ClassLogs from './pages/ClassLogs'
+import Settings from './pages/Settings'
+
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, isAdmin, loading } = useAuth()
@@ -44,6 +46,11 @@ export default function App() {
                 } />
                 <Route path="/work-logs" element={<WorkLogs />} />
                 <Route path="/class-logs" element={<ClassLogs />} />
+                <Route path="/settings" element={
+                  <ProtectedRoute adminOnly>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
               </Routes>
             </Layout>
           </ProtectedRoute>
@@ -52,4 +59,3 @@ export default function App() {
     </BrowserRouter>
   )
 }
-import Settings from './pages/Settings'
