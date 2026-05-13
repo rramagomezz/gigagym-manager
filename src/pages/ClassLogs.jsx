@@ -34,11 +34,12 @@ export default function ClassLogs() {
   const [filterMonth, setFilterMonth] = useState(now.getMonth() + 1)
   const [filterYear, setFilterYear] = useState(now.getFullYear())
 
- useEffect(() => {
+  useEffect(() => {
   if (isAdmin || currentEmployee?.id) {
     fetchAll()
   }
-}, [filterEmployee, filterMonth, filterYear, currentEmployee])
+}, [filterEmployee, filterMonth, filterYear, currentEmployee, isAdmin])
+
 
 
   async function fetchAll() {

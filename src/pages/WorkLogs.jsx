@@ -35,7 +35,7 @@ useEffect(() => {
   if (isAdmin || currentEmployee?.id) {
     fetchAll()
   }
-}, [filterEmployee, filterMonth, filterYear, currentEmployee])
+}, [filterEmployee, filterMonth, filterYear, currentEmployee, isAdmin])
   
 async function fetchAll() {
     setLoading(true)
