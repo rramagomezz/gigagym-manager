@@ -7,13 +7,13 @@ import Employees from './pages/Employees'
 import WorkLogs from './pages/WorkLogs'
 import ClassLogs from './pages/ClassLogs'
 import Settings from './pages/Settings'
-
+import Home from './pages/Home'
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, isAdmin, loading } = useAuth()
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400">Cargando...</div>
   if (!user) return <Navigate to="/login" />
-  if (adminOnly && !isAdmin) return <Navigate to="/mis-horas" />
+  if (adminOnly && !isAdmin) return <Navigate to="/home" />
   return children
 }
 
@@ -51,6 +51,7 @@ export default function App() {
                     <Settings />
                   </ProtectedRoute>
                 } />
+                <Route path="/home" element={<Home />} />
               </Routes>
             </Layout>
           </ProtectedRoute>

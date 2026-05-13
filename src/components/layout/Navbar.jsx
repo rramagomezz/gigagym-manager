@@ -12,6 +12,7 @@ export default function Navbar({ isAdmin, onSignOut, employee }) {
   ]
 
   const employeeLinks = [
+    { to: '/home', label: '🏠 Inicio' },
     { to: '/work-logs', label: '🕐 Mis horas' },
     { to: '/class-logs', label: '🏋️ Mis clases' },
   ]
