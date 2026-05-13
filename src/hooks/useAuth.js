@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-const ADMIN_EMAILS = ['rg17415@gmail.com', 'gigagym.centro@gmail.com']
+const ADMIN_EMAILS = ['rg17415@gmail.com', 'gigagym.centro@gmail.com', 'franco.83ed@gmail.com']
 
 export function useAuth() {
   const [user, setUser] = useState(null)
