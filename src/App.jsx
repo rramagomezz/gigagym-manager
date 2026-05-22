@@ -10,7 +10,6 @@ import Settings from './pages/Settings'
 import Home from './pages/Home'
 import SetupDevice from './pages/SetupDevice'
 
-<Route path="/setup-device" element={<SetupDevice />} />
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, isAdmin, loading } = useAuth()
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-400">Cargando...</div>
@@ -32,6 +31,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+        <Route path="/setup-device" element={<SetupDevice />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <Layout isAdmin={isAdmin} onSignOut={signOut} employee={employee}>
