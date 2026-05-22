@@ -76,7 +76,7 @@ export default function Settings() {
   }
 
   async function handleDelete(ct) {
-    if (!confirm(`¿Eliminar "${ct.name}"? Las clases ya registradas no se verán afectadas.`)) return
+    if (!confirm(`¿Eliminar "${ct.name}"?`)) return
     try {
       await deleteClassType(ct.id)
       await fetchClassTypes()
@@ -89,22 +89,21 @@ export default function Settings() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Configuración</h1>
+          <h1 className="text-2xl font-bold text-white">Configuración</h1>
           <p className="text-sm text-gray-500 mt-1">Gestioná los tipos de clase y sus valores de bono</p>
         </div>
         <Button onClick={openNew}>+ Nueva clase</Button>
       </div>
 
-      {/* Info de reglas */}
-      <Card className="mb-6 bg-blue-50 border-blue-100">
+      <Card className="mb-6 border-red-900 bg-red-950 bg-opacity-30">
         <div className="flex gap-3">
           <span className="text-2xl">💡</span>
           <div>
-            <p className="font-semibold text-blue-800 mb-1">Regla de cálculo del bono</p>
-            <p className="text-sm text-blue-700">
+            <p className="font-semibold text-red-400 mb-1">Regla de cálculo del bono</p>
+            <p className="text-sm text-gray-400">
               Bono = Horas × Valor base. Si hay más alumnos que el umbral, se suma el bono extra por hora.
             </p>
-            <p className="text-sm text-blue-600 mt-1 font-medium">
+            <p className="text-sm text-red-400 mt-1 font-medium">
               Ejemplo: 2hs con 12 alumnos = 2 × $8.000 + 2 × $2.000 = $20.000
             </p>
           </div>
@@ -112,13 +111,13 @@ export default function Settings() {
       </Card>
 
       {loading ? (
-        <p className="text-center text-gray-400 py-8">Cargando...</p>
+        <p className="text-center text-gray-500 py-8">Cargando...</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {classTypes.map(ct => (
             <Card key={ct.id}>
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-bold text-gray-800">{ct.name}</h3>
+                <h3 className="text-lg font-bold text-white">{ct.name}</h3>
                 <div className="flex gap-2">
                   <Button size="sm" variant="ghost" onClick={() => openEdit(ct)}>✏️</Button>
                   <Button size="sm" variant="danger" onClick={() => handleDelete(ct)}>🗑️</Button>
@@ -127,21 +126,19 @@ export default function Settings() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Valor base por hora</span>
-                  <span className="font-semibold text-gray-800">{formatCurrency(ct.base_bonus)}</span>
+                  <span className="font-semibold text-white">{formatCurrency(ct.base_bonus)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Bono extra por hora</span>
-                  <span className="font-semibold text-green-600">+{formatCurrency(ct.bonus_extra)}</span>
+                  <span className="font-semibold text-green-400">+{formatCurrency(ct.bonus_extra)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Umbral de alumnos</span>
-                  <span className="font-semibold text-blue-600">+{ct.bonus_threshold} alumnos</span>
+                  <span className="font-semibold text-red-400">+{ct.bonus_threshold} alumnos</span>
                 </div>
-                <div className="border-t pt-2 mt-2 flex justify-between">
+                <div className="border-t border-gray-700 pt-2 mt-2 flex justify-between">
                   <span className="text-gray-500">Bono máximo/hora</span>
-                  <span className="font-bold text-gray-800">
-                    {formatCurrency(ct.base_bonus + ct.bonus_extra)}
-                  </span>
+                  <span className="font-bold text-white">{formatCurrency(ct.base_bonus + ct.bonus_extra)}</span>
                 </div>
               </div>
             </Card>
@@ -150,50 +147,28 @@ export default function Settings() {
       )}
 
       {showModal && (
-        <Modal
-          title={editing ? `Editar — ${editing.name}` : 'Nueva clase'}
-          onClose={() => setShowModal(false)}
-        >
+        <Modal title={editing ? `Editar — ${editing.name}` : 'Nueva clase'} onClose={() => setShowModal(false)}>
           <div className="space-y-4">
-            <Input
-              label="Nombre de la clase *"
-              value={form.name}
+            <Input label="Nombre de la clase *" value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="Ej: Funcional, Zumba..."
-            />
-            <Input
-              label="Valor base por hora *"
-              type="number"
-              value={form.base_bonus}
-              onChange={e => setForm({ ...form, base_bonus: e.target.value })}
-              placeholder="8000"
-            />
-            <Input
-              label="Bono extra por hora (si supera el umbral)"
-              type="number"
-              value={form.bonus_extra}
-              onChange={e => setForm({ ...form, bonus_extra: e.target.value })}
-              placeholder="2000"
-            />
-            <Input
-              label="Umbral de alumnos para el bono extra"
-              type="number"
-              value={form.bonus_threshold}
-              onChange={e => setForm({ ...form, bonus_threshold: e.target.value })}
-              placeholder="10"
-            />
+              placeholder="Ej: Funcional, Zumba..." />
+            <Input label="Valor base por hora *" type="number" value={form.base_bonus}
+              onChange={e => setForm({ ...form, base_bonus: e.target.value })} placeholder="8000" />
+            <Input label="Bono extra por hora" type="number" value={form.bonus_extra}
+              onChange={e => setForm({ ...form, bonus_extra: e.target.value })} placeholder="2000" />
+            <Input label="Umbral de alumnos para el bono extra" type="number" value={form.bonus_threshold}
+              onChange={e => setForm({ ...form, bonus_threshold: e.target.value })} placeholder="10" />
 
-            {/* Preview */}
             {form.base_bonus && (
-              <div className="bg-gray-50 rounded-xl p-3 space-y-1 text-sm">
-                <p className="font-medium text-gray-700 mb-2">Preview del cálculo (1 hora):</p>
+              <div className="bg-gray-800 rounded-xl p-3 border border-gray-700 space-y-1 text-sm">
+                <p className="font-medium text-gray-300 mb-2">Preview (1 hora):</p>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Con {form.bonus_threshold} alumnos o menos</span>
-                  <span className="font-semibold">{formatCurrency(Number(form.base_bonus))}</span>
+                  <span className="font-semibold text-white">{formatCurrency(Number(form.base_bonus))}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Con más de {form.bonus_threshold} alumnos</span>
-                  <span className="font-semibold text-green-600">
+                  <span className="font-semibold text-green-400">
                     {formatCurrency(Number(form.base_bonus) + Number(form.bonus_extra || 0))}
                   </span>
                 </div>

@@ -6,7 +6,7 @@ import { getClassTypes } from '../api/classTypes'
 import Card from '../components/ui/Card'
 import Select from '../components/ui/Select'
 import Input from '../components/ui/Input'
-import { calcSalary, formatCurrency } from '../utils/salary'
+import { calcSalary, formatCurrency, formatDuration } from '../utils/salary'
 
 const now = new Date()
 
@@ -59,10 +59,10 @@ export default function Dashboard() {
     const workLogs = allWorkLogs.filter(l => l.employee_id === emp.id)
     const classLogs = allClassLogs.filter(l => l.employee_id === emp.id)
     const salary = calcSalary(emp, workLogs, classLogs, classTypes)
-    const totalHours = workLogs.reduce((acc, l) => acc + Number(l.hours), 0)
-    const normalHours = workLogs.filter(l => !l.is_holiday).reduce((acc, l) => acc + Number(l.hours), 0)
-    const holidayHours = workLogs.filter(l => l.is_holiday).reduce((acc, l) => acc + Number(l.hours), 0)
-    return { emp, salary, totalHours, normalHours, holidayHours, classCount: classLogs.length }
+    const totalMinutes = workLogs.reduce((acc, l) => acc + Number(l.duration_minutes || 0), 0)
+    const normalMinutes = workLogs.filter(l => !l.is_holiday).reduce((acc, l) => acc + Number(l.duration_minutes || 0), 0)
+    const holidayMinutes = workLogs.filter(l => l.is_holiday).reduce((acc, l) => acc + Number(l.duration_minutes || 0), 0)
+    return { emp, salary, totalMinutes, normalMinutes, holidayMinutes, classCount: classLogs.length }
   })
 
   const grandTotal = summaries.reduce((acc, s) => acc + s.salary.total, 0)
@@ -103,19 +103,19 @@ export default function Dashboard() {
       </Card>
 
       {/* Total general */}
-      <Card className="mb-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-blue-100 text-sm mb-1">Total a pagar — {monthLabel} {filterYear}</p>
-            <p className="text-4xl font-bold">{formatCurrency(grandTotal)}</p>
-          </div>
-          <div className="text-right text-sm text-blue-100">
-            <p>{filteredEmployees.length} empleado{filteredEmployees.length !== 1 ? 's' : ''}</p>
-            <p>{allWorkLogs.length} registros de horas</p>
-            <p>{allClassLogs.length} clases dictadas</p>
-          </div>
-        </div>
-      </Card>
+<Card className="mb-6 bg-gradient-to-r from-red-900 to-red-800 border-red-900">
+  <div className="flex justify-between items-center">
+    <div>
+      <p className="text-red-300 text-sm mb-1">Total a pagar — {monthLabel} {filterYear}</p>
+      <p className="text-4xl font-bold text-white">{formatCurrency(grandTotal)}</p>
+    </div>
+    <div className="text-right text-sm text-red-300">
+      <p>{filteredEmployees.length} empleado{filteredEmployees.length !== 1 ? 's' : ''}</p>
+      <p>{allWorkLogs.length} jornadas registradas</p>
+      <p>{allClassLogs.length} clases dictadas</p>
+    </div>
+  </div>
+</Card>
 
       {/* Tarjetas por empleado */}
       {loading ? (
@@ -126,43 +126,42 @@ export default function Dashboard() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {summaries.map(({ emp, salary, totalHours, normalHours, holidayHours, classCount }) => (
+          {summaries.map(({ emp, salary, totalMinutes, normalMinutes, holidayMinutes, classCount }) => (
             <Card key={emp.id}>
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-800">
-                    {emp.first_name} {emp.last_name}
-                  </h3>
-                  <p className="text-sm text-blue-600">{emp.job_title || 'Sin cargo'}</p>
+                  <h3 className="text-lg font-bold text-white">
+  {emp.first_name} {emp.last_name}
+</h3>
+<p className="text-sm text-red-500">{emp.job_title || 'Sin cargo'}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-green-600">{formatCurrency(salary.total)}</p>
                   <p className="text-xs text-gray-400">sueldo total</p>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Horas normales</p>
-                  <p className="font-bold text-gray-800">{normalHours}hs</p>
-                  <p className="text-xs text-green-600">{formatCurrency(salary.normalPay)}</p>
-                </div>
-                <div className="bg-orange-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Horas feriado</p>
-                  <p className="font-bold text-gray-800">{holidayHours}hs</p>
-                  <p className="text-xs text-green-600">{formatCurrency(salary.holidayPay)}</p>
-                </div>
-                <div className="bg-blue-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Clases dictadas</p>
-                  <p className="font-bold text-gray-800">{classCount} clase{classCount !== 1 ? 's' : ''}</p>
-                  <p className="text-xs text-green-600">{formatCurrency(salary.classPay)}</p>
-                </div>
-                <div className="bg-green-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Total horas</p>
-                  <p className="font-bold text-gray-800">{totalHours}hs</p>
-                  <p className="text-xs text-green-600">{formatCurrency(salary.normalPay + salary.holidayPay)}</p>
-                </div>
-              </div>
+  <div className="bg-gray-800 rounded-xl p-3 border border-gray-700">
+    <p className="text-xs text-gray-500 mb-1">Horas normales</p>
+    <p className="font-bold text-white">{formatDuration(normalMinutes)}</p>
+    <p className="text-xs text-green-500">{formatCurrency(salary.normalPay)}</p>
+  </div>
+  <div className="bg-red-950 bg-opacity-50 rounded-xl p-3 border border-red-900">
+    <p className="text-xs text-gray-500 mb-1">Horas feriado</p>
+    <p className="font-bold text-white">{formatDuration(holidayMinutes)}</p>
+    <p className="text-xs text-green-500">{formatCurrency(salary.holidayPay)}</p>
+  </div>
+  <div className="bg-gray-800 rounded-xl p-3 border border-gray-700">
+    <p className="text-xs text-gray-500 mb-1">Clases dictadas</p>
+    <p className="font-bold text-white">{classCount} clase{classCount !== 1 ? 's' : ''}</p>
+    <p className="text-xs text-green-500">{formatCurrency(salary.classPay)}</p>
+  </div>
+  <div className="bg-gray-800 rounded-xl p-3 border border-gray-700">
+    <p className="text-xs text-gray-500 mb-1">Total trabajado</p>
+    <p className="font-bold text-white">{formatDuration(totalMinutes)}</p>
+    <p className="text-xs text-green-500">{formatCurrency(salary.normalPay + salary.holidayPay)}</p>
+  </div>
+</div>
             </Card>
           ))}
         </div>

@@ -101,26 +101,26 @@ export default function Employees() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {employees.map(emp => (
-            <Card key={emp.id}>
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-bold text-gray-800 text-lg">
-                    {emp.first_name} {emp.last_name}
-                  </h3>
-                  <span className="text-sm text-blue-600 font-medium">{emp.job_title || 'Sin cargo'}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => openEdit(emp)}>✏️</Button>
-                  <Button size="sm" variant="danger" onClick={() => handleDelete(emp)}>🗑️</Button>
-                </div>
-              </div>
-              <div className="space-y-1 text-sm text-gray-600">
-                <p>💰 Hora normal: <span className="font-semibold text-gray-800">${Number(emp.hourly_rate).toLocaleString('es-AR')}</span></p>
-                <p>📅 Hora feriado: <span className="font-semibold text-gray-800">${Number(emp.holiday_rate).toLocaleString('es-AR')}</span></p>
-                {emp.phone && <p>📱 {emp.phone}</p>}
-                {emp.email && <p>✉️ {emp.email}</p>}
-              </div>
-            </Card>
+<Card key={emp.id}>
+  <div className="flex justify-between items-start mb-3">
+    <div>
+      <h3 className="font-bold text-white text-lg">
+        {emp.first_name} {emp.last_name}
+      </h3>
+      <span className="text-sm text-red-500 font-medium">{emp.job_title || 'Sin cargo'}</span>
+    </div>
+    <div className="flex gap-2">
+      <Button size="sm" variant="ghost" onClick={() => openEdit(emp)}>✏️</Button>
+      <Button size="sm" variant="danger" onClick={() => handleDelete(emp)}>🗑️</Button>
+    </div>
+  </div>
+  <div className="space-y-1 text-sm text-gray-400">
+    <p>💰 Hora normal: <span className="font-semibold text-white">${Number(emp.hourly_rate).toLocaleString('es-AR')}</span></p>
+    <p>📅 Hora feriado: <span className="font-semibold text-white">${Number(emp.holiday_rate).toLocaleString('es-AR')}</span></p>
+    {emp.phone && <p>📱 {emp.phone}</p>}
+    {emp.email && <p>✉️ {emp.email}</p>}
+  </div>
+</Card>
           ))}
         </div>
       )}

@@ -12,6 +12,15 @@ import { useAuth } from '../hooks/useAuth'
 
 const now = new Date()
 
+const months = [
+  { value: 1, label: 'Enero' }, { value: 2, label: 'Febrero' },
+  { value: 3, label: 'Marzo' }, { value: 4, label: 'Abril' },
+  { value: 5, label: 'Mayo' }, { value: 6, label: 'Junio' },
+  { value: 7, label: 'Julio' }, { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Septiembre' }, { value: 10, label: 'Octubre' },
+  { value: 11, label: 'Noviembre' }, { value: 12, label: 'Diciembre' }
+]
+
 export default function ClassLogs() {
   const { isAdmin, employee: currentEmployee } = useAuth()
   const [logs, setLogs] = useState([])
@@ -35,12 +44,8 @@ export default function ClassLogs() {
   const [filterYear, setFilterYear] = useState(now.getFullYear())
 
   useEffect(() => {
-  if (isAdmin || currentEmployee?.id) {
-    fetchAll()
-  }
-}, [filterEmployee, filterMonth, filterYear, currentEmployee, isAdmin])
-
-
+    if (isAdmin || currentEmployee?.id) fetchAll()
+  }, [filterEmployee, filterMonth, filterYear, currentEmployee, isAdmin])
 
   async function fetchAll() {
     setLoading(true)
@@ -110,19 +115,10 @@ export default function ClassLogs() {
 
   const totalBonus = logs.reduce((acc, l) => acc + getBonusForLog(l), 0)
 
-  const months = [
-    { value: 1, label: 'Enero' }, { value: 2, label: 'Febrero' },
-    { value: 3, label: 'Marzo' }, { value: 4, label: 'Abril' },
-    { value: 5, label: 'Mayo' }, { value: 6, label: 'Junio' },
-    { value: 7, label: 'Julio' }, { value: 8, label: 'Agosto' },
-    { value: 9, label: 'Septiembre' }, { value: 10, label: 'Octubre' },
-    { value: 11, label: 'Noviembre' }, { value: 12, label: 'Diciembre' }
-  ]
-
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="text-2xl font-bold text-white">
           {isAdmin ? 'Clases dictadas' : 'Mis clases'}
         </h1>
         <Button onClick={() => setShowModal(true)}>+ Cargar clase</Button>
@@ -131,45 +127,39 @@ export default function ClassLogs() {
       <Card className="mb-6">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {isAdmin && (
-            <Select
-              label="Empleado"
-              value={filterEmployee}
+            <Select label="Empleado" value={filterEmployee}
               onChange={e => setFilterEmployee(e.target.value)}
               options={[
                 { value: '', label: 'Todos' },
                 ...employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))
-              ]}
-            />
+              ]} />
           )}
-          <Select
-            label="Mes"
-            value={filterMonth}
+          <Select label="Mes" value={filterMonth}
             onChange={e => setFilterMonth(Number(e.target.value))}
-            options={months.map(m => ({ value: m.value, label: m.label }))}
-          />
+            options={months.map(m => ({ value: m.value, label: m.label }))} />
           <Input label="Año" type="number" value={filterYear}
             onChange={e => setFilterYear(Number(e.target.value))} />
         </div>
       </Card>
 
-{isAdmin && (
+      {isAdmin && (
         <div className="grid grid-cols-2 gap-4 mb-6">
           <Card>
             <p className="text-sm text-gray-500 mb-1">Total clases</p>
-            <p className="text-2xl font-bold text-blue-600">{logs.length}</p>
+            <p className="text-2xl font-bold text-red-500">{logs.length}</p>
           </Card>
           <Card>
             <p className="text-sm text-gray-500 mb-1">Total bonos</p>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalBonus)}</p>
+            <p className="text-2xl font-bold text-green-400">{formatCurrency(totalBonus)}</p>
           </Card>
         </div>
       )}
 
       {loading ? (
-        <p className="text-center text-gray-400 py-8">Cargando...</p>
+        <p className="text-center text-gray-500 py-8">Cargando...</p>
       ) : logs.length === 0 ? (
         <Card>
-          <p className="text-center text-gray-400 py-8">No hay clases para este período.</p>
+          <p className="text-center text-gray-500 py-8">No hay clases para este período.</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -182,21 +172,21 @@ export default function ClassLogs() {
                 <div className="flex justify-between items-start">
                   <div>
                     {isAdmin && (
-                      <p className="font-semibold text-gray-800">
+                      <p className="font-semibold text-white">
                         {emp ? `${emp.first_name} ${emp.last_name}` : 'Empleado eliminado'}
                       </p>
                     )}
-                    <p className="text-sm text-blue-600 font-medium">{log.class_types?.name || 'Clase'}</p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-red-500 font-medium">{log.class_types?.name || 'Clase'}</p>
+                    <p className="text-sm text-gray-400 mt-1">
                       {new Date(log.date + 'T12:00:00').toLocaleDateString('es-AR')} · {log.hours}hs · {log.students_count} alumnos
                       {hasExtra && (
-                        <span className="ml-2 bg-green-100 text-green-600 text-xs px-2 py-0.5 rounded-full">+bono extra</span>
+                        <span className="ml-2 bg-green-900 text-green-400 text-xs px-2 py-0.5 rounded-full">+bono extra</span>
                       )}
                     </p>
-                    {log.observations && <p className="text-xs text-gray-400 mt-1">📝 {log.observations}</p>}
+                    {log.observations && <p className="text-xs text-gray-500 mt-1">📝 {log.observations}</p>}
                   </div>
                   <div className="flex items-center gap-4">
-                    <p className="font-bold text-green-600">{formatCurrency(bonus)}</p>
+                    {isAdmin && <p className="font-bold text-green-400">{formatCurrency(bonus)}</p>}
                     {(isAdmin || log.employee_id === currentEmployee?.id) && (
                       <Button size="sm" variant="danger" onClick={() => handleDelete(log.id)}>🗑️</Button>
                     )}
@@ -212,26 +202,20 @@ export default function ClassLogs() {
         <Modal title="Cargar clase" onClose={() => setShowModal(false)}>
           <div className="space-y-4">
             {isAdmin && (
-              <Select
-                label="Empleado *"
-                value={form.employee_id}
+              <Select label="Empleado *" value={form.employee_id}
                 onChange={e => setForm({ ...form, employee_id: e.target.value })}
-                options={employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))}
-              />
+                options={employees.map(e => ({ value: e.id, label: `${e.first_name} ${e.last_name}` }))} />
             )}
             {!isAdmin && (
-              <div className="bg-blue-50 rounded-xl px-4 py-3">
-                <p className="text-sm text-blue-700 font-medium">
+              <div className="bg-gray-800 rounded-xl px-4 py-3 border border-gray-700">
+                <p className="text-sm text-gray-300 font-medium">
                   👤 {currentEmployee?.first_name} {currentEmployee?.last_name}
                 </p>
               </div>
             )}
-            <Select
-              label="Tipo de clase *"
-              value={form.class_type_id}
+            <Select label="Tipo de clase *" value={form.class_type_id}
               onChange={e => setForm({ ...form, class_type_id: e.target.value })}
-              options={classTypes.map(ct => ({ value: ct.id, label: ct.name }))}
-            />
+              options={classTypes.map(ct => ({ value: ct.id, label: ct.name }))} />
             <Input label="Fecha *" type="date" value={form.date}
               onChange={e => setForm({ ...form, date: e.target.value })} />
             <div className="grid grid-cols-2 gap-3">
@@ -241,9 +225,9 @@ export default function ClassLogs() {
                 onChange={e => setForm({ ...form, students_count: e.target.value })} placeholder="15" />
             </div>
 
-            {form.hours && form.students_count && classTypes.length > 0 && (
-              <div className="bg-blue-50 rounded-xl p-3">
-                <p className="text-sm text-blue-700 font-medium">
+            {isAdmin && form.hours && form.students_count && classTypes.length > 0 && (
+              <div className="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                <p className="text-sm text-gray-300 font-medium">
                   💰 Bono estimado: {formatCurrency(
                     calcClassBonus(
                       { hours: Number(form.hours), students_count: Number(form.students_count) },
@@ -251,16 +235,16 @@ export default function ClassLogs() {
                     )
                   )}
                   {Number(form.students_count) > 10 && (
-                    <span className="ml-2 text-green-600">✓ incluye bono extra</span>
+                    <span className="ml-2 text-green-400">✓ incluye bono extra</span>
                   )}
                 </p>
               </div>
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">Observaciones</label>
+              <label className="text-sm font-medium text-gray-400">Observaciones</label>
               <textarea
-                className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-none placeholder-gray-600"
                 rows={3} value={form.observations}
                 onChange={e => setForm({ ...form, observations: e.target.value })}
                 placeholder="Opcional..."
