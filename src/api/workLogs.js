@@ -10,8 +10,9 @@ export async function getWorkLogs(employeeId, month, year) {
   if (employeeId) query = query.eq('employee_id', employeeId)
   if (month && year) {
     const from = `${year}-${String(month).padStart(2, '0')}-01`
-    const to = `${year}-${String(month).padStart(2, '0')}-31`
-    query = query.gte('date', from).lte('date', to)
+    const lastDay = new Date(year, month, 0).getDate()
+    const to = `${year}-${String(month).padStart(2, '0')}-${lastDay}`
+   query = query.gte('date', from).lte('date', to)
   }
 
   const { data, error } = await query

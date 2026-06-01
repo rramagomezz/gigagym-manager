@@ -9,7 +9,8 @@ export async function getClassLogs(employeeId, month, year) {
   if (employeeId) query = query.eq('employee_id', employeeId)
   if (month && year) {
     const from = `${year}-${String(month).padStart(2, '0')}-01`
-    const to = `${year}-${String(month).padStart(2, '0')}-31`
+    const lastDay = new Date(year, month, 0).getDate()
+    const to = `${year}-${String(month).padStart(2, '0')}-${lastDay}`
     query = query.gte('date', from).lte('date', to)
   }
 
