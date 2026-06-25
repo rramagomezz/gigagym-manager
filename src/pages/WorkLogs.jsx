@@ -9,8 +9,8 @@ import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
-import { formatCurrency, formatDuration, roundMinutesToHours } from '../utils/salary'
 import { useAuth } from '../hooks/useAuth'
+import { formatCurrency, formatDuration, roundMinutesToHours, getLogHours } from '../utils/salary'
 
 const now = new Date()
 
@@ -270,22 +270,24 @@ function AdminWorkLogs({ employees }) {
     }
   }
 
-  function openEdit(log) {
+function openEdit(log) {
     setEditingLog(log)
     setEditForm({
       duration_minutes: log.duration_minutes || 0,
       notes: log.notes || '',
-      is_holiday: log.is_holiday || false
+      is_holiday: log.is_holiday || false,
+      extra_half_hour: log.extra_half_hour || false
     })
-  }
+  } 
 
   async function handleSaveEdit() {
     setSaving(true)
     try {
-      await adminEditSession(editingLog.id, {
+        await adminEditSession(editingLog.id, {
         duration_minutes: Number(editForm.duration_minutes),
         notes: editForm.notes || null,
-        is_holiday: editForm.is_holiday
+        is_holiday: editForm.is_holiday,
+        extra_half_hour: editForm.extra_half_hour
       })
       await fetchAll()
       setEditingLog(null)
@@ -310,12 +312,12 @@ function AdminWorkLogs({ employees }) {
     return employees.find(e => e.id === id)
   }
 
-  function calcPay(log) {
-    const emp = getEmployee(log.employee_id)
-    if (!emp) return 0
-    const hours = roundMinutesToHours(log.duration_minutes || 0)
-    return hours * (log.is_holiday ? emp.holiday_rate : emp.hourly_rate)
-  }
+function calcPay(log) {
+  const emp = getEmployee(log.employee_id)
+  if (!emp) return 0
+  const hours = getLogHours(log)
+  return hours * (log.is_holiday ? emp.holiday_rate : emp.hourly_rate)
+}
 
   const totalMinutes = logs.reduce((acc, l) => acc + Number(l.duration_minutes || 0), 0)
   const totalPay = logs.reduce((acc, l) => acc + calcPay(l), 0)
@@ -406,7 +408,7 @@ function AdminWorkLogs({ employees }) {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="font-bold text-green-400">{formatDuration(log.duration_minutes || 0)}</p>
+                     <p className="font-bold text-green-400">{getLogHours(log)}h</p>
                       <p className="text-xs text-green-600">{formatCurrency(calcPay(log))}</p>
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => openEdit(log)}>✏️</Button>
@@ -429,6 +431,18 @@ function AdminWorkLogs({ employees }) {
               value={editForm.is_holiday ? 'true' : 'false'}
               onChange={e => setEditForm({ ...editForm, is_holiday: e.target.value === 'true' })}
               options={[{ value: 'false', label: 'Día normal' }, { value: 'true', label: 'Feriado' }]} />
+           <div className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3 border border-gray-700">
+  <div>
+    <p className="text-sm font-medium text-gray-300">Sumar media hora extra</p>
+    <p className="text-xs text-gray-500">Para jornadas de X,5 horas</p>
+  </div>
+  <button
+    onClick={() => setEditForm({ ...editForm, extra_half_hour: !editForm.extra_half_hour })}
+    className={`w-12 h-6 rounded-full transition-colors ${editForm.extra_half_hour ? 'bg-red-700' : 'bg-gray-600'}`}
+  >
+    <div className={`w-5 h-5 bg-white rounded-full transition-transform mx-0.5 ${editForm.extra_half_hour ? 'translate-x-6' : 'translate-x-0'}`} />
+  </button>
+</div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-400">Observaciones</label>
               <textarea

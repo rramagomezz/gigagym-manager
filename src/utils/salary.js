@@ -9,10 +9,13 @@ export function roundMinutesToHours(minutes) {
   return hours
 }
 
-function getLogHours(log) {
-  if (log.duration_minutes != null) return roundMinutesToHours(log.duration_minutes)
+export function getLogHours(log) {
+  if (log.duration_minutes != null) {
+    const rounded = roundMinutesToHours(log.duration_minutes)
+    return rounded + (log.extra_half_hour ? 0.5 : 0)
+  }
   return Number(log.hours) || 0
-}
+} 
 
 export function calcWorkPay(logs, employee) {
   let normal = 0
