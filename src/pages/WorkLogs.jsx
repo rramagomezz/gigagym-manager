@@ -9,7 +9,7 @@ import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
-import { formatCurrency, formatDuration } from '../utils/salary'
+import { formatCurrency, formatDuration, roundMinutesToHours } from '../utils/salary'
 import { useAuth } from '../hooks/useAuth'
 
 const now = new Date()
@@ -313,7 +313,7 @@ function AdminWorkLogs({ employees }) {
   function calcPay(log) {
     const emp = getEmployee(log.employee_id)
     if (!emp) return 0
-    const hours = (log.duration_minutes || 0) / 60
+    const hours = roundMinutesToHours(log.duration_minutes || 0)
     return hours * (log.is_holiday ? emp.holiday_rate : emp.hourly_rate)
   }
 

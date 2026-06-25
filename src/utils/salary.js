@@ -1,5 +1,16 @@
+// Redondea minutos a horas según la regla del gimnasio:
+// < 25 minutos extra → no cuenta
+// >= 45 minutos extra → cuenta como hora completa
+// entre 25 y 44 → no cuenta
+export function roundMinutesToHours(minutes) {
+  const hours = Math.floor(minutes / 60)
+  const remaining = minutes % 60
+  if (remaining >= 45) return hours + 1
+  return hours
+}
+
 function getLogHours(log) {
-  if (log.duration_minutes != null) return log.duration_minutes / 60
+  if (log.duration_minutes != null) return roundMinutesToHours(log.duration_minutes)
   return Number(log.hours) || 0
 }
 
@@ -47,7 +58,14 @@ export function formatCurrency(amount) {
   }).format(amount)
 }
 
+// Muestra solo horas redondeadas (sin minutos)
 export function formatDuration(minutes) {
+  const hours = roundMinutesToHours(minutes)
+  return `${hours}h`
+}
+
+// Para el timer en vivo (sigue mostrando h:mm:ss)
+export function formatDurationDetailed(minutes) {
   const h = Math.floor(minutes / 60)
   const m = Math.round(minutes % 60)
   return `${h}h ${m}m`
